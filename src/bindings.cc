@@ -31,6 +31,7 @@ Napi::Value oboeNotifierStatus(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value oboeNotifierStop(const Napi::CallbackInfo& info) {
+  oboe_notifier_stop();
   return info.Env().Undefined();
 }
 
