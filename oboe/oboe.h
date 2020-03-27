@@ -582,6 +582,7 @@ const char* oboe_get_tracing_decisions_auth_message (int code);
 #define OBOE_NOTIFIER_SOCKET_CONNECT 3
 #define OBOE_NOTIFIER_SOCKET_WRITE_FULL 4
 #define OBOE_NOTIFIER_SOCKET_WRITE_ERROR 5
+#define OBOE_NOTIFIER_SHUTDOWN_TIMED_OUT 6
 
 //
 // these codes are used for testing the notifier using oboe_notifier_test()
@@ -1104,7 +1105,7 @@ oboe_internal_stats_t* oboe_get_internal_stats();
 
 /* notifier related functions */
 int oboe_notifier_init(const char *socket_path);
-void oboe_notifier_stop();
+int oboe_notifier_stop(int blocking);
 int oboe_notifier_status();
 int oboe_notifier_test(int test_case, const char *test_str);
 
