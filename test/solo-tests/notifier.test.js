@@ -1,13 +1,11 @@
 'use strict';
 
 const net = require('net');
-const bindings = require('../..')
+const aob = require('../..')
 const expect = require('chai').expect;
 const fs = require('fs');
 const util = require('util');
-
-const EnvVarOptions = require('../lib/env-var-options');
-const keyMap = require('../lib/env-var-key-map');
+const EventEmitter = require('events');
 
 //
 // goodOptions are used in multiple tests so they're declared here
@@ -22,23 +20,25 @@ let notiServer;
 let notiClient;
 
 const messages = [];
+const messageEmitter = new EventEmitter();
 
-let messageConsumer;
+let messageConsumer = defaultMessageConsumer;
 
-describe('addon.oboeInit()', function () {
+function defaultMessageConsumer (msg) {
+  messages.push(msg);
+  messageEmitter.emit('message', msg);
+}
+
+describe('addon.oboeNotifier functions', function () {
+  // remove the socket file if it exists.
   before(function (done) {
     fs.unlink(notiSocket, function () {
       done();
     });
   });
+
   // before calling oboe init setup the notification server
-  before (function (done) {
-    messageConsumer = msg => {
-      if (msg.source !== 'oboe' || msg.type !== 'keep-alive') {
-        throw new Error(`unexpected message ${msg}`);
-      }
-      done();
-    };
+  before (function () {
     notiServer = net.createServer(function (client) {
       if (notiClient) {
         throw new Error('more than one client connection');
@@ -66,21 +66,30 @@ describe('addon.oboeInit()', function () {
     });
     notiServer.listen(notiSocket);
     notiServer.unref();
+  });
 
-    const status = bindings.oboeNotifierInit(notiSocket);
-    if (status !== 0 && status !== -2) {
-      throw new Error(`oboeNotifierInit() returned ${status}`);
-    }
+  it('oboeNotifierInit() should work as expected', function (done) {
+    const status = aob.oboeNotifierInit(notiSocket);
+    expect(status).oneOf([0, -2], 'status must be OK or INITIALIZING');
+
+    setTimeout(function () {
+      if (messages.length) {
+        const msg = messages.shift();
+        expect(msg.seqNo).equal(0, 'first sequence number should be 0');
+        expect(msg.source).equal('oboe', 'the source should be oboe');
+        expect(msg.type).equal('keep-alive', 'the type should be keep-alive');
+        done();
+      } else {
+        throw new Error('didn\'t get initial keep-alive message');
+      }
+    }, 500);
   });
 
   it('oboeInit() should successfully complete', function () {
-    // replace the message consumer for the rest of the tests
-    messageConsumer = msg => messages.push(msg);
-
     const details = {};
     const options = Object.assign({}, goodOptions);
     const expected = options;
-    const result = bindings.oboeInit(options, details);
+    const result = aob.oboeInit(options, details);
 
     expect(result).lte(0, 'oboeInit() not get a version mismatch');
     expect(details.valid).deep.equal(expected);
@@ -154,26 +163,63 @@ describe('addon.oboeInit()', function () {
     }, 10000);
   });
 
-  it('should shutdown correctly via client.destroy()', function (done) {
+  it('should shutdown correctly using oboeNotifierStop()', function (done) {
     messageConsumer = msg => {
       throw new Error(`unexpected message arrived: ${util.format(msg)}`);
     }
 
-    let endEmitted = false;
-    notiClient.end(function (e) {
-      bindings.oboeNotifierStop();
-      endEmitted = true;
-      notiClient.destroy();
-    });
+    aob.oboeNotifierStop();
+    expect(aob.oboeNotifierStatus()).equal(-1, 'status should be shutting-down');
 
-    // this should generate the end callback.
-    notiServer.close();
-
-    // wait a minute to make sure no keep-alives come in.
     setTimeout(function () {
-      expect(endEmitted).equal(true, 'the end event should have happened');
-      done();
-    }, 61000)
+      expect(aob.oboeNotifierStatus()).equal(-1, 'status should be disabled');
+      notiServer.getConnections((e, count) => {
+        if (e) {
+          throw e;
+        }
+        expect(count).equal(0, 'server should have no connections');
+        done();
+      })
+    }, 500);
+  });
+
+  it('oboeNotifierInit() should work as expected a second time', function (done) {
+    messageConsumer = defaultMessageConsumer;
+    messages.length = 0;
+    const status = aob.oboeNotifierInit(notiSocket);
+    expect(status).oneOf([0, -2], 'status must be OK or INITIALIZING');
+
+    setTimeout(function () {
+      if (messages.length) {
+        const msg = messages.shift();
+        expect(msg.seqNo).equal(0, 'first sequence number should be 0');
+        expect(msg.source).equal('oboe', 'the source should be oboe');
+        expect(msg.type).equal('keep-alive', 'the type should be keep-alive');
+        done();
+      } else {
+        throw new Error('didn\'t get initial keep-alive message');
+      }
+    }, 500);
+  });
+
+  it('should shutdown again using oboeNotifierStop()', function (done) {
+    messageConsumer = msg => {
+      throw new Error(`unexpected message arrived: ${util.format(msg)}`);
+    }
+
+    aob.oboeNotifierStop();
+    expect(aob.oboeNotifierStatus()).equal(-1, 'status should be shutting-down');
+
+    setTimeout(function () {
+      expect(aob.oboeNotifierStatus()).equal(-1, 'status should be disabled');
+      notiServer.getConnections((e, count) => {
+        if (e) {
+          throw e;
+        }
+        expect(count).equal(0, 'server should have no connections');
+        done();
+      })
+    }, 500);
   });
 
 })
