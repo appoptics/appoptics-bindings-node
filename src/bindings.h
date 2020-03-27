@@ -7,6 +7,9 @@
 #include <napi.h>
 #include <oboe/oboe.h>
 
+// hack for oboe incompatability
+#define events_flush_batch_size max_request_size_bytes
+
 typedef int (*send_generic_span_t) (char*, uint16_t, oboe_span_params_t*);
 
 //

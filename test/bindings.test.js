@@ -1,6 +1,7 @@
+'use strict';
+
 const bindings = require('../')
 const expect = require('chai').expect;
-const util = require('util');
 
 const EnvVarOptions = require('./lib/env-var-options');
 const keyMap = require('./lib/env-var-key-map');
@@ -32,17 +33,12 @@ const goodOptions = {
 describe('addon.oboeInit()', function () {
 
   it('should handle good options values', function () {
-    const booleanOptions = {
-      traceMetrics: true,
-      //oneFilePerEvent: true
-    }
-
     const details = {};
     const options = Object.assign({}, goodOptions);
     const expected = options;
     const result = bindings.oboeInit(options, details);
 
-    expect(result).lte(0, 'the first oboeInit() should succeed');
+    expect(result).lte(0, 'the first oboeInit() not get a version mismatch');
     expect(details.valid).deep.equal(expected);
     expect(details.processed).deep.equal(expected);
 
@@ -83,7 +79,7 @@ describe('addon.oboeInit()', function () {
     const options = Object.assign({}, badOptions);
 
     // it's already init'd so expect a -1 result.
-    var result = bindings.oboeInit(options, details);
+    const result = bindings.oboeInit(options, details);
     expect(result).equal(-1, 'oboe should already be initialized');
     expect(details.valid).deep.equal(booleans);
   })

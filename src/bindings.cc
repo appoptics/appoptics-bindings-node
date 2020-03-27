@@ -9,6 +9,32 @@
 #include "reporter.cc"
 
 //
+// initialize a client connection to
+//
+Napi::Value oboeNotifierInit(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1 || !info[0].IsString()) {
+    Napi::TypeError::New(env, "socket path must be a string").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string path = info[0].ToString();
+
+  const int status = oboe_notifier_init(path.c_str());
+
+  return Napi::Number::New(env, status);
+}
+
+Napi::Value oboeNotifierStatus(const Napi::CallbackInfo& info) {
+  return Napi::Number::New(info.Env(), oboe_notifier_status());
+}
+
+Napi::Value oboeNotifierStop(const Napi::CallbackInfo& info) {
+  return info.Env().Undefined();
+}
+
+//
 // Initialize oboe
 //
 Napi::Value oboeInit(const Napi::CallbackInfo& info) {
@@ -38,7 +64,7 @@ Napi::Value oboeInit(const Napi::CallbackInfo& info) {
 
     // setup oboe's options structure
     oboe_init_options_t options;
-    options.version = 7;
+    options.version = 9;
 
     int setDefaultsStatus = oboe_init_options_set_defaults(&options);
     if (setDefaultsStatus > 0) {
@@ -248,6 +274,9 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("TRACE_ALWAYS", Napi::Number::New(env, OBOE_TRACE_ALWAYS));
 
   // functions directly on the bindings object
+  exports.Set("oboeNotifierInit", Napi::Function::New(env, oboeNotifierInit));
+  exports.Set("oboeNotifierStatus", Napi::Function::New(env, oboeNotifierStatus));
+  exports.Set("oboeNotifierStop", Napi::Function::New(env, oboeNotifierStop));
   exports.Set("oboeInit", Napi::Function::New(env, oboeInit));
   exports.Set("o", Napi::Function::New(env, o));
 
