@@ -100,7 +100,10 @@ describe('addon.oboeNotifier functions', function () {
     expect(keysIn.length).equal(keysOut.length);
   });
 
-  it('should receive an oboe logging message', function (done) {
+  it('should receive an oboe config message', function (done) {
+    const sk = goodOptions.serviceKey;
+    const keyLength = process.env.AO_SWOKEN_PROD.length;
+    const maskedKey = sk.slice(0, 4) + '...' + sk.slice(keyLength - 4);
     let counter = 0;
     const id = setInterval(function () {
       if (messages.length) {
@@ -108,8 +111,17 @@ describe('addon.oboeNotifier functions', function () {
         const msg = messages.shift();
         expect(msg.seqNo).equal(1, 'should have a seqNo of 1');
         expect(msg.source).equal('oboe', 'source didn\'t match');
-        expect(msg.type).equal('logging', 'oboe message should be type logging');
-        expect(msg.level).equal('info', 'the logging level should be info');
+        expect(msg.type).equal('config', 'oboe message should be type config');
+        expect(msg.hostname).equal('collector.appoptics.com', 'hostname should be production');
+        expect(msg.port).equal(443, 'port should be 443');
+        expect(msg.log).equal('', 'log should be empty');
+        expect(msg.clientId).equal(maskedKey, 'service key should match');
+        expect(msg.buffersize).equal(1000, 'buffersize should be 1000');
+        expect(msg.maxTransactions).equal(200, 'maxTransactions should be 200');
+        expect(msg.flushMaxWaitTime).equal(5000, 'flushMaxWaitTime should be 5000');
+        expect(msg.eventsFlushInterval).equal(2, 'eventFlushInterval should be 2');
+        expect(msg.maxRequestSizeBytes).equal(3000000, 'maxRequestSizeBytes should be 3e6');
+        expect(msg.proxy).equal('', 'proxy should be empty');
         done();
       } else {
         counter += 1;
@@ -169,7 +181,7 @@ describe('addon.oboeNotifier functions', function () {
     }
 
     aob.oboeNotifierStop();
-    expect(aob.oboeNotifierStatus()).equal(-1, 'status should be shutting-down');
+    expect(aob.oboeNotifierStatus()).equal(-3, 'status should be shutting-down');
 
     setTimeout(function () {
       expect(aob.oboeNotifierStatus()).equal(-1, 'status should be disabled');
@@ -208,7 +220,7 @@ describe('addon.oboeNotifier functions', function () {
     }
 
     aob.oboeNotifierStop();
-    expect(aob.oboeNotifierStatus()).equal(-1, 'status should be shutting-down');
+    expect(aob.oboeNotifierStatus()).equal(-3, 'status should be shutting-down');
 
     setTimeout(function () {
       expect(aob.oboeNotifierStatus()).equal(-1, 'status should be disabled');
