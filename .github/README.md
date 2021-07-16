@@ -2,7 +2,6 @@
 
 [@appoptics/apm-bindings](https://www.npmjs.com/package/@appoptics/apm-bindings) is an NPM package containing a binary node add-on.
 
-
 The package is installed as a dependency when the AppOptics APM Agent ([appoptics-apm](https://github.com/appoptics/appoptics-apm-node)) is installed. In any install run it will first attempt to install a prebuilt add-on using [node-pre-gyp](https://github.com/mapbox/node-pre-gyp) and only if that fails, will it attempt to build the add-on from source using [node-gyp](https://github.com/nodejs/node-gyp).
 
 This is a **Linux Only package** with no Mac or Windows support.
@@ -26,6 +25,7 @@ An X-trace ID (XID) comprises a single byte header with the hex value `2B`, a ta
 
 Note: layer is a legacy term for span. It has been replaced in the code but still appears in event messages as Layer and in the liboboe interface.
 
+
 ## Local Development
 
 Development **must be done on Linux**.
@@ -43,10 +43,31 @@ Building with `node-gyp` (`via node-pre-gyp`) requires:
 * `.github` contains the files for github actions.
 * `dev` contains anything related to dev environment
 
-### With Docker:
+### Docker Dev Container
+
+To setup a development environament on a non-linux machine (say a Mac):
 
 1. Create a `.env` file and set: `AO_TOKEN_PROD={a valid production token}`. Potentially you can also set `AO_TOKEN_STG={a valid staging token}`
 2. Run `npm run dev` - this will create a docker container, set it up, and open a shell. Docker container will have nano installed and access to GitHub SSH keys as configured.
+3. Run `npm run dev node:latest` or `npm run dev node:12` to get specific flavors of node. Note that the Docker Dev Container is assumed to be "build capable" so using `node:16-alpine3.11` is a no.
+
+### "One Off" Docker Container
+
+At times it may be useful to set a "one off" docker container to test a speficic feature or build.
+
+This repo has a ["single" GitHub package](https://github.com/orgs/appoptics/packages) named `node` scoped to `appoptics/appoptics-bindings-node` (the repo) which has [multiple tagged images](https://github.com/appoptics/appoptics-bindings-node/pkgs/container/appoptics-bindings-node%2Fnode). 
+
+Those images serve two main purposes:
+
+1. They complement the official node images (https://hub.docker.com/_/node) with specific end-user configurations.
+2. They provide the build environments for the multiple variations (os glibc/musl, node version) of the package.
+
+Use:
+`docker run -it --workdir=/usr/src/work/ -v `pwd`:/usr/src/work/ ghcr.io/appoptics/appoptics-bindings-node/node:{tag} sh`
+
+Example:
+`docker run -it --workdir=/usr/src/work/ -v `pwd`:/usr/src/work/ ghcr.io/appoptics/appoptics-bindings-node/node:14-centos7-build sh
+`
 
 ### Testing
 
@@ -170,7 +191,7 @@ To start fresh on the dev repo run `npm run dev:repo` again.
 
 ### Overview
 
-The package is `node-pre-gyp` enabled and is published in a two step process. First prebuilt add-on tarballs are uploaded to an S3 bucket, and then an NPM package is published to the NPM registry. Prebuilt tarballs must be versioned with the same version as the NPM package and they must be present in the S3 bucket prior to the NPM package itself being published to the registry.
+The package is `node-pre-gyp` enabled and is published in a two step process. First prebuilt add-on tarballs are uploaded to an S3 bucket, and then an NPM package is published to the NPM . Prebuilt tarballs must be versioned with the same version as the NPM package and they must be present in the S3 bucket prior to the NPM package itself being published to the registry.
 
 There are many platforms that can use the prebuilt add-on but will fail to build it, hence the importance of the prebuilts.
 
