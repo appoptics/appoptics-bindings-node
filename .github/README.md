@@ -5,7 +5,7 @@
 
 The package is installed as a dependency when the AppOptics APM agent ([appoptics-apm](https://github.com/appoptics/appoptics-apm-node)) is installed. In any install run it will first attempt to install a prebuilt add-on using [node-pre-gyp](https://github.com/mapbox/node-pre-gyp) and only if that fails, will it attempt to build the add-on from source using [node-gyp](https://github.com/nodejs/node-gyp).
 
-This is a **Linux Only package**. No Mac or Windows support.
+This is a **Linux Only package** with no Mac or Windows support.
 
 ## Two minutes on how it works
 
@@ -31,22 +31,22 @@ Note: layer is a legacy term for span. It has been replaced in the code but stil
 Development **must be done on Linux**.
 
 Building with node-gyp requires:
-* Python v3.6, v3.7, v3.8, or v3.9
+* Python (2 or 3 depending on version of npm)
 * make
 * A proper C/C++ compiler toolchain, like [GCC](https://gcc.gnu.org/)
 
 ### Project layout
 
 * `src` directory contains the C++ code to bind to liboboe. 
-* `oboe` directory contains liboboe and its required header files. liboboe is downloaded from: https://files.appoptics.com/c-lib/10.1.1/. Pre-release versions are at: https://s3-us-west-2.amazonaws.com/rc-files-t2/c-lib
+* `oboe` directory contains liboboe and its required header files. `liboboe` is downloaded from: https://files.appoptics.com/c-lib. Pre-release versions are at: https://s3-us-west-2.amazonaws.com/rc-files-t2/c-lib
 * `test` directory contains the test suite. 
 * `.github` contains the files for github actions.
+* `dev` contains anything related to dev environament
 
 ### With Docker:
 
 1. Create a `.env` file and set: `AO_TOKEN_PROD={a valid production token}`. Potentially you can also set `AO_TOKEN_STG={a valid staging token}`
 2. Run `npm run dev` - this will create a docker container, set it up, and open a shell.
-3. Run `npm test` to make sure all is ok.
 
 ### Testing
 
@@ -68,29 +68,29 @@ The `test` script in `package.json` runs `test.sh` which then manages how mocha 
 
 Building is done using [node-pre-gyp](https://github.com/mapbox/node-pre-gyp).
 
-1. `npx node-pre-gyp rebuild` is all that is needed. More granular commands avaliable. See node-pre-gyp documentation.
+1. `npx node-pre-gyp rebuild` is all that is needed. More granular commands avaliable. See `node-pre-gyp` documentation.
 
-Before a build, `setup-liboboe.js` must run in order to create symbolic links to the correct version of liboboe so the `SONAME` field can be satisfied. 
+Before a build, `setup-liboboe.js` must run at lease once in order to create symbolic links to the correct version of liboboe so the `SONAME` field can be satisfied. 
 
-The `install` and `rebuild` scripts in `package.json` run `setup-liboboe.js` as the first step before invoking node-pre-gyp. As a result, initial `npm` install will set links as required.
+The `install` and `rebuild` scripts in `package.json` run `setup-liboboe.js` as the first step before invoking `node-pre-gyp`. As a result, initial `npm` install will set links as required.
 
-`setup-liboboe.js` can be run multiple times and may be run again if needs be.
+Note that `setup-liboboe.js` can be run multiple times with no issues.
 
 ### Debugging
 
 Debugging node addons is not intuitive but this might help (from [stackoverflow](https://stackoverflow.com/questions/23228868/how-to-debug-binary-module-of-nodejs))
 
-First, compile your add-on using node-gyp with the --debug flag.
+First, compile your add-on using `node-pre-gyp` with the `--debug` flag.
 
-`node-gyp --debug configure rebuild`
+`node-pre-gyp --debug configure rebuild`
 
 (The next point about changing the require path doesn't apply to appoptics-bindings because it uses the `bindings` module and that will find the module in `Debug`, `Release`, and other locations.)
 
-Second, if you're still in "playground" mode like I am, you're probably loading your module with something like
+Second, if you're still in "playground" mode, you're probably loading your module with something like
 
 `var ObjModule = require('./ObjModule/build/Release/objModule');`
 
-However, when you rebuild using node-gyp in debug mode, node-gyp throws away the Release version and creates a Debug version instead. So update the module path:
+However, when you rebuild using `node-pre-gyp` in debug mode, `node-pre-gyp` throws away the Release version and creates a Debug version instead. So update the module path:
 
 `var ObjModule = require('./ObjModule/build/Debug/objModule');`
 
@@ -151,14 +151,20 @@ There are many platforms that can use the prebuilt add-on but will fail to build
 
 #### Workflows and Events
 
-##### Prep - Push Dockerfile
+##### Prep - Manual ~~Push Dockerfile~~
 
 * Push to master is disabled by branch protection.
-* Push to branch which changes any Dockerfile in the `.github/docker-node/` directory will trigger [docker-node.yml](./workflows/docker-node.yml). 
+* ~~Push to branch which changes any Dockerfile in the `.github/docker-node/` directory will trigger [docker-node.yml](./workflows/docker-node.yml).~~ Due to [GitHub Action issues](https://github.com/actions/runner/issues/1202) Manual trigger of [docker-node.yml] is required.
 * Workflow will:
-  - Build all create a [single package](https://github.com/appoptics/appoptics-bindings-node/pkgs/container/appoptics-bindings-node%2Fnode) named `node` scoped to `appoptics/appoptics-bindings-node` (the repo). Package has multiple tagged images for each of the dockerfiles from which it was built. For example, the image created from a file named ``10-centos7-build.Dockerfile` has a `10-centos7-build` tag and can pulled from `ghcr.io/appoptics/appoptics-bindings-node/node:10-centos7-build`. Since this repo is public, the images are also public.
+  - Build all Dockerfiles and create a [single package](https://github.com/appoptics/appoptics-bindings-node/pkgs/container/appoptics-bindings-node%2Fnode) named `node` scoped to `appoptics/appoptics-bindings-node` (the repo). Package has multiple tagged images for each of the dockerfiles from which it was built. For example, the image created from a file named ``10-centos7-build.Dockerfile` has a `10-centos7-build` tag and can pulled from `ghcr.io/appoptics/appoptics-bindings-node/node:10-centos7-build`. Since this repo is public, the images are also public.
 * Workflow creates (or recreates) images used in other workflows.
 * Manual trigger supported.
+
+```
+push Dockerfile ─► ┌───────────────────┐ ─► ─► ─► ─► ─►
+                   │Build Docker Images│ build & publish
+manual ──────────► └───────────────────┘     
+```
 
 ##### Develop - Push
 
@@ -169,6 +175,11 @@ There are many platforms that can use the prebuilt add-on but will fail to build
   - Run the tests against the build.
 * Workflow confirms code is not "broken".
 * Manual trigger supported. Enables to select image from docker hub or local files (e.g. `erbium-buster-slim`) to build code on.
+```
+push to branch ──► ┌───────────────────┐ ─► ─► ─► ─► ─►
+                   │Single Build & Test│ contained build
+manual (image?) ─► └───────────────────┘ ◄── ◄── ◄── ◄──
+```
 
 ##### Review - Pull Request
 
@@ -178,7 +189,11 @@ There are many platforms that can use the prebuilt add-on but will fail to build
   - Run the tests on each build.
 * Workflow confirms code can be built in each of the required variations.
 * Manual trigger supported. 
-
+```
+pull request ────► ┌──────────────────┐ ─► ─► ─► ─► ─►
+                   │Group Build & Test│ contained build
+manual ──────────► └──────────────────┘ ◄── ◄── ◄── ◄──
+```
 ##### Accept - Merge Pull Request 
 
 * Merging a pull request will trigger [accept.yml](./workflows/accept.yml). 
@@ -190,6 +205,20 @@ There are many platforms that can use the prebuilt add-on but will fail to build
   - Create all Prebuilt Group images and install the prebuilt tarball on each.
 * Workflow ensures node-pre-gyp setup (config and S3 buckets) is working for a wide variety of potential customer configurations.
 * Manual trigger supported. Enables to select running the tests after install (on both Fallback & Prebuilt groups)
+
+```
+merge to master ─► ┌──────────────────────┐
+                   │Fallback Group Install│
+manual (test?) ──► └┬─────────────────────┘
+                    │
+                    │   ┌───────────────────────────┐ ─► ─► ─►
+                    └─► │Build Group Build & Package│ S3 Package
+                        └┬──────────────────────────┘ Staging
+                         │
+                         │   ┌──────────────────────┐     │
+                         └─► │Prebuilt Group Install│ ◄── ▼
+                             └──────────────────────┘
+```
 
 ##### Release - Push Version Tag
 
@@ -207,46 +236,6 @@ There are many platforms that can use the prebuilt add-on but will fail to build
 * Workflow publishing to NPM registry exposes the NPM package (and the prebuilt tarballs in the *production* S3 bucket) to the public.
 * Note: @appoptics/apm-bindings is not meant to be directly consumed. It is developed as a dependency of [appoptics-apm](https://www.npmjs.com/package/appoptics-apm).
 
-#### Workflow Diagram
-
-##### Prep Workflow
-```
-push Dockerfile ─► ┌───────────────────┐ ─► ─► ─► ─► ─►
-                   │Build Docker Images│ build & publish
-manual ──────────► └───────────────────┘      │
-                                              ▼
-                                          Test Workflows
-```
-
-
-
-##### Test Workflows
-```
-push to branch ──► ┌───────────────────┐ ─► ─► ─► ─► ─►
-                   │Single Build & Test│ contained build
-manual (image?) ─► └───────────────────┘ ◄── ◄── ◄── ◄──
-
-
-pull request ────► ┌──────────────────┐ ─► ─► ─► ─► ─►
-                   │Group Build & Test│ contained build
-manual ──────────► └──────────────────┘ ◄── ◄── ◄── ◄──
-
-merge to master ─► ┌──────────────────────┐
-                   │Fallback Group Install│
-manual (test?) ──► └┬─────────────────────┘
-                    │
-                    │   ┌───────────────────────────┐ ─► ─► ─►
-                    └─► │Build Group Build & Package│ S3 Package
-                        └┬──────────────────────────┘ Staging
-                         │
-                         │   ┌──────────────────────┐     │
-                         └─► │Prebuilt Group Install│ ◄── ▼
-                             └──────────────────────┘
-
-```
-
-##### Release Workflow
-
 ```
 push semver tag ─► ┌────────────────────────────┐ ─► ─► ─►
 push alpha tag     │Build Group Build & Package │ S3 Package
@@ -260,7 +249,6 @@ push alpha tag     │Build Group Build & Package │ S3 Package
                          └─► │NPM Publish│
                              └───────────┘
 ```
-
 ### Maintain
 
 > **tl;dr** There is no need to modify workflows. All data used is externalized.
@@ -314,8 +302,8 @@ push alpha tag     │Build Group Build & Package │ S3 Package
 1. Repo is defined with 6 secrets:
 ```
 AO_TOKEN_PROD
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
+STAGING_AWS_ACCESS_KEY_ID
+STAGING_AWS_SECRET_ACCESS_KEY
 PROD_AWS_ACCESS_KEY_ID
 PROD_AWS_SECRET_ACCESS_KEY
 NPM_AUTH_TOKEN
