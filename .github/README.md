@@ -355,5 +355,10 @@ PROD_AWS_ACCESS_KEY_ID
 PROD_AWS_SECRET_ACCESS_KEY
 NPM_AUTH_TOKEN
 ```
+## License
+
+Copyright (c) 2016 - 2021 SolarWinds, LLC
+
+Released under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 Fabriqué au Canada : Made in Canada 🇨🇦
