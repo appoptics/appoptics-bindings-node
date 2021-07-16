@@ -68,13 +68,10 @@ The `test` script in `package.json` runs `test.sh` which then manages how mocha 
 
 Building is done using [node-pre-gyp](https://github.com/mapbox/node-pre-gyp).
 
-1. `npx node-pre-gyp rebuild` is all that is needed. More granular commands avaliable. See `node-pre-gyp` documentation.
+1. Before a build, `setup-liboboe.js` must run at leaset once in order to create symbolic links to the correct version of liboboe so the `SONAME` field can be satisfied. 
+2.  Run `npx node-pre-gyp rebuild`. More granular commands avaliable. See `node-pre-gyp` documentation.
 
-Before a build, `setup-liboboe.js` must run at lease once in order to create symbolic links to the correct version of liboboe so the `SONAME` field can be satisfied. 
-
-The `install` and `rebuild` scripts in `package.json` run `setup-liboboe.js` as the first step before invoking `node-pre-gyp`. As a result, initial `npm` install will set links as required.
-
-Note that `setup-liboboe.js` can be run multiple times with no issues.
+The `install` and `rebuild` scripts in `package.json` run `setup-liboboe.js` as the first step before invoking `node-pre-gyp`. As a result, initial `npm` install will set links as required so skipping directly to step 2 above is possible. That said, `setup-liboboe.js` can be run multiple times with no issues.
 
 ### Debugging
 
