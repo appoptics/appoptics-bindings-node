@@ -46,7 +46,7 @@ Building with `node-gyp` (`via node-pre-gyp`) requires:
 ### With Docker:
 
 1. Create a `.env` file and set: `AO_TOKEN_PROD={a valid production token}`. Potentially you can also set `AO_TOKEN_STG={a valid staging token}`
-2. Run `npm run dev` - this will create a docker container, set it up, and open a shell.
+2. Run `npm run dev` - this will create a docker container, set it up, and open a shell. Docker container will have nano installed and access to GitHub SSH keys as configured.
 
 ### Testing
 
