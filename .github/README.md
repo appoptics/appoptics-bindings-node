@@ -257,10 +257,10 @@ push alpha tag     │Build Group Build & Package │ S3 Package
 * Local images are defined in [docker-node](./docker-node).
 * S3 Staging bucket is defined in [package.json](../package.json).
 * S3 Production bucket is defined in [package.json](../package.json).
-* [Build Group](./config/build-group.yml) are images on which the various versions of the add-on are built. They include combinations to support different Node versions and libc implementations. Generally build is done with the lowest versions of the OSes supported, so that `glibc`/`musl` versions are the oldest/most compatible.
-* [Fallback Group](./config/fallback-group.yml) images include OS and Node version combinations that *can* build for source.
-* [Prebuilt Group](./config/prebuilt-group.yml) images include OS and Node version combinations that *can not* build for source and thus require a prebuilt tarball.
-* [Target Group](./config/target-group.yml) images include a wide variety of OS and Node version combinations. Group includes both images that can build from code as well as those which can not.
+* [Build Group](./config/build-group.json) are images on which the various versions of the add-on are built. They include combinations to support different Node versions and libc implementations. Generally build is done with the lowest versions of the OSes supported, so that `glibc`/`musl` versions are the oldest/most compatible.
+* [Fallback Group](./config/fallback-group.json) images include OS and Node version combinations that *can* build for source.
+* [Prebuilt Group](./config/prebuilt-group.json) images include OS and Node version combinations that *can not* build for source and thus require a prebuilt tarball.
+* [Target Group](./config/target-group.json) images include a wide variety of OS and Node version combinations. Group includes both images that can build from code as well as those which can not.
 
 #### Adding an image to GitHub Container Registry
 
@@ -284,22 +284,21 @@ push alpha tag     │Build Group Build & Package │ S3 Package
 
 ### Implementation
 
-> **tl;dr** No Actions used. Simple script gets image, returns running container id. Steps exec on container.
+> **tl;dr** No Actions used. Matrix and Container directive used throughout.
 
 #### Workflows
 
 1. All workflows `runs-on: ubuntu-latest`.
-2. For maintainability and security custom actions are avoided and shell scripts preferred.
+2. For maintainability and security custom actions are avoided.
 3. Configuration has been externalized. All images groups are loaded from external json files located in the `config` directory.
 4. Loading uses [fromJSON function and a standard two-job setup](https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#fromjson).
-5. Loading is encapsulated in s shell script (`matrix-from-json.sh`). Since the script is not a "formal" action it is placed in a `script` directory.
+5. Loading is encapsulated in a [shell script](./scripts/matrix-from-json.sh). Since the script is not a "formal" action it is placed in a `script` directory.
 3. All job steps are named.
-4. `matrix` and `container` directives are used for groups.
 5. Jobs are linked using `needs:`.
 
-#### Secrets
+### Secrets
 
-1. Repo is defined with 6 secrets:
+Repo is defined with 6 secrets:
 ```
 AO_TOKEN_PROD
 STAGING_AWS_ACCESS_KEY_ID
