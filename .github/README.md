@@ -55,7 +55,7 @@ To setup a development environament on a non-linux machine (say a Mac):
 
 At times it may be useful to set a "one off" docker container to test a speficic feature or build.
 
-This repo has a ["single" GitHub package](https://github.com/orgs/appoptics/packages) named `node` scoped to `appoptics/appoptics-bindings-node` (the repo) which has [multiple tagged images](https://github.com/appoptics/appoptics-bindings-node/pkgs/container/appoptics-bindings-node%2Fnode). 
+This repo has a "single" GitHub package named `node` scoped to `appoptics/appoptics-bindings-node` (the repo) which has [multiple tagged images](https://github.com/appoptics/appoptics-bindings-node/pkgs/container/appoptics-bindings-node%2Fnode). 
 
 Those images serve two main purposes:
 
