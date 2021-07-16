@@ -3,7 +3,7 @@
 [@appoptics/apm-bindings](https://www.npmjs.com/package/@appoptics/apm-bindings) is an NPM package containing a binary node add-on.
 
 
-The package is installed as a dependency when the AppOptics APM agent ([appoptics-apm](https://github.com/appoptics/appoptics-apm-node)) is installed. In any install run it will first attempt to install a prebuilt add-on using [node-pre-gyp](https://github.com/mapbox/node-pre-gyp) and only if that fails, will it attempt to build the add-on from source using [node-gyp](https://github.com/nodejs/node-gyp).
+The package is installed as a dependency when the AppOptics APM Agent ([appoptics-apm](https://github.com/appoptics/appoptics-apm-node)) is installed. In any install run it will first attempt to install a prebuilt add-on using [node-pre-gyp](https://github.com/mapbox/node-pre-gyp) and only if that fails, will it attempt to build the add-on from source using [node-gyp](https://github.com/nodejs/node-gyp).
 
 This is a **Linux Only package** with no Mac or Windows support.
 
@@ -30,7 +30,7 @@ Note: layer is a legacy term for span. It has been replaced in the code but stil
 
 Development **must be done on Linux**.
 
-Building with node-gyp requires:
+Building with `node-gyp` (`via node-pre-gyp`) requires:
 * Python (2 or 3 depending on version of npm)
 * make
 * A proper C/C++ compiler toolchain, like [GCC](https://gcc.gnu.org/)
@@ -38,10 +38,10 @@ Building with node-gyp requires:
 ### Project layout
 
 * `src` directory contains the C++ code to bind to liboboe. 
-* `oboe` directory contains liboboe and its required header files. `liboboe` is downloaded from: https://files.appoptics.com/c-lib. Pre-release versions are at: https://s3-us-west-2.amazonaws.com/rc-files-t2/c-lib
+* `oboe` directory contains `liboboe` and its required header files. `liboboe` is downloaded from: https://files.appoptics.com/c-lib. Pre-release versions are at: https://s3-us-west-2.amazonaws.com/rc-files-t2/c-lib
 * `test` directory contains the test suite. 
 * `.github` contains the files for github actions.
-* `dev` contains anything related to dev environament
+* `dev` contains anything related to dev environment
 
 ### With Docker:
 
@@ -136,6 +136,36 @@ Dump a `.node` file as asm (build debug for better symbols):
 
 `objdump -CRrS build/Release/ao-metrics.node  > ao-metrics.s`
 
+### Dev Repo
+
+The dev repo setup allows to run end-to-end `node-pre-gyp` and npm release process in a development environment.
+It also greatly simplifies creating and testing CI integrations such as GitHub Actions.
+
+It contains:
+  - dev repo: https://github.com/appoptics/appoptics-bindings-node-dev (private, permissions via AppOptics Organization admin)
+  - staging S3 bucket: https://apm-appoptics-bindings-node-dev-staging.s3.us-east-1.amazonaws.com (public, write permissions via SolarWinds admin)
+  - production S3 bucket: https://apm-appoptics-bindings-node-dev-production.s3.amazonaws.com (public, write permissions via SolarWinds admin)
+
+The dev repo was cloned from the main repo and setup with the appropriate secrets.
+
+To set the main repo to work with the dev repo:
+
+1. `git remote -v`
+2. `git remote add dev git@github.com:appoptics/appoptics-bindings-node-dev.git`
+3. `npm run dev:repo`
+
+The script will:
+  - Force push all branches and tags to dev repo.
+  - Remove the local dev repo and clone a fresh one into a sibling directory. 
+  - Modify package.json:
+  ```
+  "name": "@appoptics/apm-binding-dev",
+  "staging_host": "https://apm-appoptics-bindings-node-dev-staging.s3.us-east-1.amazonaws.com",
+  "production_host": "https://apm-appoptics-bindings-node-dev-production.s3.amazonaws.com",
+  ```
+  - Commit updated `package.json` to `master` and merge into all branches.
+
+To start fresh on the dev repo run `npm run dev:repo` again.
 
 ## Development & Release with GitHub Actions 
 
