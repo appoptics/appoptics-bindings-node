@@ -63,10 +63,10 @@ Those images serve two main purposes:
 2. They provide the build environments for the multiple variations (os glibc/musl, node version) of the package.
 
 Use:
-`docker run -it --workdir=/usr/src/work/ -v `pwd`:/usr/src/work/ ghcr.io/appoptics/appoptics-bindings-node/node:{tag} sh`
+`docker run -it --workdir=/usr/src/work/ -v \`pwd\`:/usr/src/work/ --env-file .env ghcr.io/appoptics/appoptics-bindings-node/node:{tag} sh`
 
 Example:
-`docker run -it --workdir=/usr/src/work/ -v `pwd`:/usr/src/work/ ghcr.io/appoptics/appoptics-bindings-node/node:14-centos7-build sh
+`docker run -it --workdir=/usr/src/work/ -v \`pwd\`:/usr/src/work/ --env-file .env ghcr.io/appoptics/appoptics-bindings-node/node:14-centos7-build sh
 `
 
 ### Testing
@@ -150,7 +150,6 @@ Find the versions of GLIBCXX required by a file
 `objdump -T /lib/x86_64-linux-gnu/libc.so.6 | sed -n 's/^.*\(GLIBCXX_[^ ]*\).*$/\1/p' | sort -u -V`
 
 Dump a `.node` file as asm (build debug for better symbols):
-
 
 `objdump -CRrS build/Release/ao-metrics.node  > ao-metrics.s`
 
