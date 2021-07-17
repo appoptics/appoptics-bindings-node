@@ -45,15 +45,17 @@ Building with `node-gyp` (`via node-pre-gyp`) requires:
 
 ### Docker Dev Container
 
-To setup a development environament on a non-linux machine (say a Mac):
+To setup a development environment on a non-linux machine (say a Mac):
 
 1. Create a `.env` file and set: `AO_TOKEN_PROD={a valid production token}`. Potentially you can also set `AO_TOKEN_STG={a valid staging token}`
 2. Run `npm run dev` - this will create a docker container, set it up, and open a shell. Docker container will have nano installed and access to GitHub SSH keys as configured.
 3. Run `npm run dev node:latest` or `npm run dev node:12` to get specific flavors of node. Note that the Docker Dev Container is assumed to be "build capable" so using `node:16-alpine3.11` is a no.
 
+The setup script ensures a "clean" work place with each run by removing artifacts and installed modules on each exit.
+
 ### "One Off" Docker Container
 
-At times it may be useful to set a "one off" docker container to test a speficic feature or build.
+At times it may be useful to set a "one off" docker container to test a specific feature or build. Do not launch two instances as it may lead to trouble.
 
 This repo has a "single" GitHub package named `node` scoped to `appoptics/appoptics-bindings-node` (the repo) which has [multiple tagged images](https://github.com/appoptics/appoptics-bindings-node/pkgs/container/appoptics-bindings-node%2Fnode). 
 
@@ -71,7 +73,7 @@ Example:
 ```
 docker run -it --workdir=/usr/src/work/ -v `pwd`:/usr/src/work/ --env-file .env ghcr.io/appoptics/appoptics-bindings-node/node:14-centos7-build sh
 ```
-
+Note that "one off" containers mount a directory containing node_modules that may have been installed by another environment. Tread carefully.
 ### Testing
 
 Test are run using [Mocha](https://github.com/mochajs/mocha).
